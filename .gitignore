@@ -1,0 +1,16 @@
+/build/
+/build-*/
+/managed_components/
+/.vscode/
+/lcd_build.log
+/sdkconfig.old
+/tests/*.exe
+/home_preview_song.png
+/components/ui/assets/cjk10.bin
+/components/ui/assets/cjk12.bin
+/components/ui/assets/cjk16.bin
+/components/ui/include/ui_font_data.h
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db

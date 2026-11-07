@@ -1,0 +1,4 @@
+## MP3 解码器（Helix，纯 C，无外部依赖）
+dependencies:
+  idf: ">=6.0"
+  chmorgan/esp-libhelix-mp3: "^1.0.3"

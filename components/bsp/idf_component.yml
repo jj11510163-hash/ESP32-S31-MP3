@@ -1,0 +1,4 @@
+## 板级支持包的外部依赖
+dependencies:
+  idf: ">=6.0"
+  espressif/led_strip: "^3"

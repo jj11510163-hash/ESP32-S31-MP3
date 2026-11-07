@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>S31 Player</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      color: #182521;
+      background: #f4f7f5;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    button { font: inherit; cursor: pointer; }
+    button:disabled { cursor: not-allowed; opacity: .45; }
+    [hidden] { display: none !important; }
+    .shell { width: min(100%, 760px); margin: 0 auto; padding: 0 20px 44px; }
+    header { display: flex; align-items: center; justify-content: space-between; min-height: 74px; gap: 12px; }
+    .brand { font-size: 14px; font-weight: 800; color: #195944; }
+    .device { font-size: 12px; color: #6b7973; }
+    .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; background: #e4ebe7; border-radius: 8px; }
+    .tab { min-height: 42px; border: 0; border-radius: 5px; background: transparent; color: #52655b; font-weight: 650; }
+    .tab[aria-selected="true"] { background: #fff; color: #164d3d; box-shadow: 0 1px 3px #16251d18; }
+    main { padding-top: 24px; }
+    .section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 40px; }
+    h1 { margin: 0; font-size: 21px; line-height: 1.25; font-weight: 750; }
+    h2 { margin: 0; font-size: 15px; font-weight: 700; }
+    .count, .muted { color: #64766c; font-size: 13px; }
+    .icon-button { flex: none; width: 38px; height: 38px; border: 1px solid #cddad2; border-radius: 6px; background: #fff; color: #195944; font-size: 23px; line-height: 1; }
+    .icon-button:active, .action:active, .remove:active { background: #deebe3; }
+    .storage { padding: 17px 0 19px; margin-top: 12px; border-top: 1px solid #dbe4dd; border-bottom: 1px solid #dbe4dd; }
+    .storage-line { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+    .storage-value { color: #52655b; font-size: 13px; text-align: right; }
+    .meter, .upload-meter { height: 5px; overflow: hidden; background: #dae5de; border-radius: 3px; }
+    .meter { margin-top: 12px; }
+    .meter > span, .upload-meter > span { display: block; width: 0; height: 100%; background: #198063; transition: width .18s ease; }
+    .upload-section { padding: 22px 0; border-bottom: 1px solid #dbe4dd; }
+    .upload-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .upload-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+    .action { min-height: 40px; padding: 0 15px; border: 1px solid #19674f; border-radius: 6px; color: #fff; background: #19674f; font-size: 14px; font-weight: 650; white-space: nowrap; }
+    .action:active { color: #164d3d; }
+    .action.secondary { background: #fff; color: #195944; border-color: #cddad2; }
+    .drop-zone { display: grid; place-items: center; min-height: 68px; margin-top: 14px; border: 1px dashed #a8c4b4; border-radius: 6px; background: #f9fbf9; color: #526e5f; font-size: 13px; }
+    .drop-zone.drag-over { border-color: #198063; background: #dceee3; color: #164d3d; }
+    .message { margin: 12px 0 0; font-size: 13px; line-height: 1.45; overflow-wrap: anywhere; }
+    .message:empty { display: none; }
+    .message.error { color: #af402e; }
+    .queue { margin-top: 14px; }
+    .queue-row { padding: 10px 0; border-top: 1px solid #e2e9e4; }
+    .queue-top { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; font-size: 13px; }
+    .queue-name { min-width: 0; overflow-wrap: anywhere; font-weight: 600; }
+    .queue-state { flex: none; max-width: 45%; text-align: right; color: #52655b; overflow-wrap: anywhere; }
+    .queue-state.error { color: #af402e; }
+    .queue-detail { margin-top: 4px; color: #af402e; font-size: 12px; overflow-wrap: anywhere; }
+    .upload-meter { margin-top: 8px; }
+    .files-section { padding-top: 22px; }
+    .empty { padding: 42px 0; text-align: center; color: #64766c; font-size: 14px; }
+    .file-row { display: flex; align-items: center; gap: 12px; min-height: 67px; padding: 11px 0; border-bottom: 1px solid #dfe8e1; }
+    .file-info { flex: 1; min-width: 0; }
+    .file-name { font-size: 14px; font-weight: 620; line-height: 1.4; overflow-wrap: anywhere; }
+    .file-size { margin-top: 4px; color: #64766c; font-size: 12px; }
+    .remove { flex: none; min-width: 54px; min-height: 36px; padding: 0 8px; border: 1px solid #e2c9c1; border-radius: 6px; background: #fff; color: #a34534; font-size: 13px; }
+    .remote { width: min(100%, 380px); margin: 26px auto 0; }
+    .pad { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .pad button { height: 76px; border: 1px solid #cddad2; border-radius: 8px; background: #fff; color: #1d5443; font-size: 28px; }
+    .pad button:active, .back-button:active { background: #dcebe2; }
+    .pad .confirm { background: #19674f; border-color: #19674f; color: #fff; font-size: 21px; font-weight: 700; }
+    .pad .confirm:active { background: #11533e; }
+    .pad .space { visibility: hidden; }
+    .back-button { width: 100%; height: 46px; margin-top: 18px; border: 1px solid #cddad2; border-radius: 7px; background: #fff; color: #1d5443; font-size: 15px; font-weight: 650; }
+    @media (max-width: 420px) {
+      .shell { padding-right: 16px; padding-left: 16px; }
+      .device { display: none; }
+    }
+    @media (pointer: coarse) { .drop-zone { display: none; } }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header><span class="brand">S31 PLAYER</span><span class="device">ESP32-S31</span></header>
+    <nav class="tabs" role="tablist" aria-label="页面">
+      <button class="tab" id="music-tab" type="button" role="tab" aria-selected="true" aria-controls="music-panel">音乐</button>
+      <button class="tab" id="remote-tab" type="button" role="tab" aria-selected="false" aria-controls="remote-panel">遥控</button>
+    </nav>
+    <main>
+      <section id="music-panel" role="tabpanel" aria-labelledby="music-tab">
+        <div class="section-head">
+          <h1>音乐管理</h1>
+          <button id="refresh" class="icon-button" type="button" aria-label="刷新音乐列表" title="刷新音乐列表">⟳</button>
+        </div>
+        <div class="storage">
+          <div class="storage-line"><h2>存储卡</h2><span id="storage-value" class="storage-value">读取中</span></div>
+          <div class="meter" role="meter" aria-label="存储卡已用空间" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="storage-fill"></span></div>
+        </div>
+        <section class="upload-section" aria-labelledby="upload-title">
+          <div class="upload-head">
+            <h2 id="upload-title">传入音乐</h2>
+            <div class="upload-actions">
+              <button id="retry" class="action secondary" type="button" hidden>重试失败项</button>
+              <button id="cancel" class="action secondary" type="button" hidden>取消上传</button>
+              <button id="choose" class="action" type="button" disabled>选择音乐</button>
+            </div>
+          </div>
+          <input id="file-input" type="file" accept=".mp3,.mp2,.flac,.wav,.wave,.aac,.m4a" multiple hidden>
+          <div id="drop-zone" class="drop-zone">拖放音乐文件到这里</div>
+          <p id="upload-message" class="message" role="status" aria-live="polite"></p>
+          <div id="queue" class="queue" aria-live="polite"></div>
+        </section>
+        <section class="files-section" aria-labelledby="files-title">
+          <div class="section-head"><h2 id="files-title">卡内音乐</h2><span id="file-count" class="count"></span></div>
+          <p id="file-message" class="message" role="status" aria-live="polite"></p>
+          <div id="files"><div class="empty">正在读取</div></div>
+        </section>
+      </section>
+      <section id="remote-panel" role="tabpanel" aria-labelledby="remote-tab" hidden>
+        <div class="section-head"><h1>遥控</h1></div>
+        <div class="remote">
+          <div class="pad">
+            <span class="space"></span><button type="button" data-key="up" aria-label="向上" title="向上">↑</button><span class="space"></span>
+            <button type="button" data-key="left" aria-label="上一页" title="上一页">←</button><button class="confirm" type="button" data-key="ok" aria-label="确认" title="确认">✓</button><button type="button" data-key="right" aria-label="下一页" title="下一页">→</button>
+            <span class="space"></span><button type="button" data-key="down" aria-label="向下" title="向下">↓</button><span class="space"></span>
+          </div>
+          <button class="back-button" type="button" data-key="back">返回</button>
+          <p id="remote-message" class="message error" role="status" aria-live="polite"></p>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const musicTab = $('music-tab');
+    const remoteTab = $('remote-tab');
+    const musicPanel = $('music-panel');
+    const remotePanel = $('remote-panel');
+    const choose = $('choose');
+    const fileInput = $('file-input');
+    const pending = [];
+    const failedJobs = [];
+    let uploading = false;
+    let cancelRequested = false;
+    let activeXhr = null;
+    let mounted = false;
+    let freeBytes = null;
+    let knownFiles = new Set();
+    let knownSizes = new Map();
+    let batchSaved = 0;
+    let batchRejected = 0;
+    let batchIssues = '';
+
+    function showTab(name) {
+      const music = name === 'music';
+      musicTab.setAttribute('aria-selected', String(music));
+      remoteTab.setAttribute('aria-selected', String(!music));
+      musicPanel.hidden = !music;
+      remotePanel.hidden = music;
+      if (music) refreshFiles();
+    }
+    musicTab.addEventListener('click', () => showTab('music'));
+    remoteTab.addEventListener('click', () => showTab('remote'));
+
+    function formatBytes(bytes) {
+      if (!Number.isFinite(bytes) || bytes < 0) return '—';
+      if (bytes < 1024) return bytes + ' B';
+      const units = ['KB', 'MB', 'GB', 'TB'];
+      let value = bytes;
+      let unit = -1;
+      do { value /= 1024; unit++; } while (value >= 1024 && unit < units.length - 1);
+      return value.toFixed(value < 10 ? 1 : 0) + ' ' + units[unit];
+    }
+
+    function setMessage(id, text, error) {
+      const el = $(id);
+      el.textContent = text;
+      el.classList.toggle('error', !!error);
+    }
+
+    function setStorage(data) {
+      mounted = data.mounted === true;
+      const total = Number(data.total);
+      const free = Number(data.free);
+      const valid = mounted && Number.isFinite(total) && total > 0 && Number.isFinite(free);
+      freeBytes = valid ? free : null;
+      updateUploadControls();
+      $('storage-value').textContent = !mounted ? '未插入' : valid ? '剩余 ' + formatBytes(free) + ' / ' + formatBytes(total) : '已插入';
+      const used = valid ? Math.max(0, Math.min(100, Math.round((total - free) * 100 / total))) : 0;
+      $('storage-fill').style.width = used + '%';
+      document.querySelector('.meter').setAttribute('aria-valuenow', String(used));
+    }
+
+    function updateUploadControls() {
+      choose.disabled = !mounted || uploading;
+      $('refresh').disabled = uploading;
+      $('cancel').hidden = !uploading;
+      $('retry').hidden = uploading || failedJobs.length === 0;
+    }
+
+    function addFileRow(file) {
+      const displayName = file.name.startsWith('music/') ? file.name.slice(6) : file.name;
+      const row = document.createElement('div');
+      row.className = 'file-row';
+      const info = document.createElement('div');
+      info.className = 'file-info';
+      const name = document.createElement('div');
+      name.className = 'file-name';
+      name.textContent = displayName;
+      const size = document.createElement('div');
+      size.className = 'file-size';
+      size.textContent = formatBytes(Number(file.size));
+      const remove = document.createElement('button');
+      remove.className = 'remove';
+      remove.type = 'button';
+      remove.textContent = '删除';
+      remove.setAttribute('aria-label', '删除 ' + displayName);
+      remove.addEventListener('click', () => deleteFile(file.name, displayName, remove));
+      info.append(name, size);
+      row.append(info, remove);
+      $('files').append(row);
+    }
+
+    async function refreshFiles(force = false) {
+      if (uploading && !force) return;
+      setMessage('file-message', '', false);
+      $('files').replaceChildren();
+      const loading = document.createElement('div');
+      loading.className = 'empty';
+      loading.textContent = '正在读取';
+      $('files').append(loading);
+      try {
+        const response = await fetch('/api/files', { cache: 'no-store' });
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        const data = await response.json();
+        setStorage(data);
+        const files = Array.isArray(data.files) ? data.files : [];
+        files.sort((a, b) => a.name.localeCompare(b.name, 'zh-CN', { numeric: true }));
+        knownFiles = new Set(files.map((file) => file.name.toLowerCase()));
+        knownSizes = new Map(files.map((file) => [file.name.toLowerCase(), Number(file.size)]));
+        $('file-count').textContent = mounted ? files.length + ' 首' : '';
+        $('files').replaceChildren();
+        if (!mounted || files.length === 0) {
+          const empty = document.createElement('div');
+          empty.className = 'empty';
+          empty.textContent = mounted ? '暂无音乐' : '未检测到存储卡';
+          $('files').append(empty);
+        } else {
+          files.forEach(addFileRow);
+        }
+        return true;
+      } catch (error) {
+        $('files').replaceChildren();
+        setMessage('file-message', '读取曲库失败，请刷新重试', true);
+        $('file-count').textContent = '';
+        return false;
+      }
+    }
+
+    async function deleteFile(name, displayName, button) {
+      if (uploading) return;
+      if (!confirm('确定删除“' + displayName + '”？')) return;
+      button.disabled = true;
+      setMessage('file-message', '', false);
+      try {
+        const response = await fetch('/api/delete?name=' + encodeURIComponent(name), { method: 'POST' });
+        if (!response.ok) throw new Error((await response.text()).trim() || 'HTTP ' + response.status);
+        await refreshFiles();
+      } catch (error) {
+        setMessage('file-message', '删除失败：' + error.message, true);
+        button.disabled = false;
+      }
+    }
+
+    function addUpload(file) {
+      const row = document.createElement('div');
+      row.className = 'queue-row';
+      const top = document.createElement('div');
+      top.className = 'queue-top';
+      const name = document.createElement('span');
+      name.className = 'queue-name';
+      name.textContent = file.name;
+      const state = document.createElement('span');
+      state.className = 'queue-state';
+      state.textContent = '等待中';
+      const meter = document.createElement('div');
+      meter.className = 'upload-meter';
+      const fill = document.createElement('span');
+      const detail = document.createElement('div');
+      detail.className = 'queue-detail';
+      detail.hidden = true;
+      meter.append(fill);
+      top.append(name, state);
+      row.append(top, meter, detail);
+      $('queue').append(row);
+      pending.push({ file, state, fill, detail });
+    }
+
+    function uploadOne(job) {
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        activeXhr = xhr;
+        xhr.open('POST', '/api/upload?name=' + encodeURIComponent(job.file.name) + '&scan=0');
+        job.state.textContent = '上传中';
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const percent = Math.min(100, Math.round(event.loaded * 100 / event.total));
+            job.fill.style.width = percent + '%';
+            job.state.textContent = percent === 100 ? '正在保存' : percent + '%';
+          }
+        };
+        xhr.onload = () => {
+          activeXhr = null;
+          if (xhr.status >= 200 && xhr.status < 300) resolve();
+          else reject(new Error(xhr.responseText.trim() || 'HTTP ' + xhr.status));
+        };
+        xhr.onerror = () => { activeXhr = null; reject(new Error('连接中断')); };
+        xhr.onabort = () => { activeXhr = null; reject(new Error('传输已取消')); };
+        xhr.send(job.file);
+      });
+    }
+
+    async function drainUploads() {
+      if (uploading) return;
+      uploading = true;
+      cancelRequested = false;
+      updateUploadControls();
+      let saved = 0;
+      let cancelled = 0;
+      let unconfirmed = 0;
+      const uncertain = [];
+      while (pending.length && !cancelRequested) {
+        const job = pending.shift();
+        try {
+          await uploadOne(job);
+          job.fill.style.width = '100%';
+          job.state.textContent = '已完成';
+          job.state.classList.remove('error');
+          job.detail.hidden = true;
+          knownFiles.add(('music/' + job.file.name).toLowerCase());
+          if (freeBytes !== null) freeBytes = Math.max(0, freeBytes - job.file.size);
+          saved++;
+          batchSaved++;
+        } catch (error) {
+          uncertain.push(job);
+          if (cancelRequested) {
+            job.state.textContent = '核对中';
+          } else {
+            failedJobs.push(job);
+            job.state.textContent = '失败';
+            job.state.classList.add('error');
+            job.state.title = error.message;
+            job.detail.textContent = error.message;
+            job.detail.hidden = false;
+          }
+        }
+      }
+      if (cancelRequested) {
+        const skipped = pending.splice(0);
+        cancelled += skipped.length;
+        skipped.forEach((job) => { job.state.textContent = '已取消'; });
+      }
+      const checked = await refreshFiles(true);
+      if (checked) {
+        uncertain.forEach((job) => {
+          const key = ('music/' + job.file.name).toLowerCase();
+          if (knownSizes.get(key) === job.file.size) {
+            job.state.textContent = '卡内已保存';
+            job.state.classList.remove('error');
+            job.detail.hidden = true;
+            job.fill.style.width = '100%';
+            const failedIndex = failedJobs.indexOf(job);
+            if (failedIndex >= 0) failedJobs.splice(failedIndex, 1);
+            saved++;
+            batchSaved++;
+          } else if (cancelRequested && !failedJobs.includes(job)) {
+            job.state.textContent = '已取消';
+            cancelled++;
+          }
+        });
+      } else {
+        uncertain.forEach((job) => {
+          if (cancelRequested && !failedJobs.includes(job)) {
+            job.state.textContent = '结果待确认';
+            unconfirmed++;
+          }
+        });
+      }
+      let scanFailed = false;
+      if (saved) {
+        try {
+          const response = await fetch('/api/rescan', { method: 'POST' });
+          if (!response.ok) throw new Error((await response.text()).trim() || 'HTTP ' + response.status);
+        } catch (error) {
+          scanFailed = true;
+          setMessage('upload-message', '歌曲已保存，但曲库刷新失败：' + error.message, true);
+        }
+      }
+      if (!scanFailed) {
+        const parts = [];
+        if (batchSaved) parts.push('已传入 ' + batchSaved + ' 首');
+        if (failedJobs.length) parts.push(failedJobs.length + ' 首失败，可重试');
+        if (batchRejected) parts.push(batchIssues);
+        if (cancelled) parts.push(cancelled + ' 首已取消');
+        if (unconfirmed) parts.push(unconfirmed + ' 首结果待确认');
+        setMessage('upload-message', parts.join('；') || '上传完成', failedJobs.length > 0 || batchRejected > 0);
+      }
+      uploading = false;
+      updateUploadControls();
+    }
+
+    choose.addEventListener('click', () => fileInput.click());
+    $('cancel').addEventListener('click', () => {
+      cancelRequested = true;
+      if (activeXhr) activeXhr.abort();
+    });
+    $('retry').addEventListener('click', () => {
+      const jobs = failedJobs.splice(0);
+      jobs.forEach((job) => {
+        job.state.textContent = '等待中';
+        job.state.classList.remove('error');
+        job.state.title = '';
+        job.detail.hidden = true;
+        job.fill.style.width = '0%';
+        pending.push(job);
+      });
+      if (pending.length) drainUploads();
+    });
+    function queueFiles(files) {
+      if (!mounted || uploading) {
+        setMessage('upload-message', '当前无法传入，请稍后重试', true);
+        return;
+      }
+      if (!files.length) return;
+      setMessage('upload-message', '', false);
+      $('queue').replaceChildren();
+      pending.length = 0;
+      failedJobs.length = 0;
+      batchSaved = 0;
+      batchIssues = '';
+      let unsupported = 0;
+      let duplicates = 0;
+      let longNames = 0;
+      let noSpace = 0;
+      let budget = freeBytes;
+      const selectedNames = new Set();
+      files.forEach((file) => {
+        const key = file.name.toLowerCase();
+        if (!/\.(mp3|mp2|flac|wav|wave|aac|m4a)$/i.test(file.name) || file.size === 0) unsupported++;
+        else if (knownFiles.has('music/' + key) || selectedNames.has(key)) duplicates++;
+        else if (('/api/upload?name=' + encodeURIComponent(file.name) + '&scan=0').length >= 512) longNames++;
+        else if (budget !== null && file.size + 32768 > budget) noSpace++;
+        else {
+          selectedNames.add(key);
+          if (budget !== null) budget -= file.size + 32768;
+          addUpload(file);
+        }
+      });
+      const issues = [];
+      if (unsupported) issues.push(unsupported + ' 个格式不支持');
+      if (duplicates) issues.push(duplicates + ' 个同名歌曲已存在');
+      if (longNames) issues.push(longNames + ' 个文件名过长');
+      if (noSpace) issues.push(noSpace + ' 个文件超出剩余空间');
+      batchRejected = unsupported + duplicates + longNames + noSpace;
+      batchIssues = issues.join('；');
+      if (issues.length) setMessage('upload-message', issues.join('；'), true);
+      if (pending.length) drainUploads();
+      else updateUploadControls();
+    }
+    fileInput.addEventListener('change', () => {
+      const files = Array.from(fileInput.files);
+      fileInput.value = '';
+      queueFiles(files);
+    });
+    const dropZone = $('drop-zone');
+    dropZone.addEventListener('dragover', (event) => {
+      event.preventDefault();
+      if (mounted && !uploading) dropZone.classList.add('drag-over');
+    });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', (event) => {
+      event.preventDefault();
+      dropZone.classList.remove('drag-over');
+      queueFiles(Array.from(event.dataTransfer.files));
+    });
+    $('refresh').addEventListener('click', () => refreshFiles());
+    remotePanel.addEventListener('click', async (event) => {
+      const button = event.target.closest('button[data-key]');
+      if (!button) return;
+      setMessage('remote-message', '', false);
+      try {
+        const response = await fetch('/api/key?k=' + button.dataset.key, { cache: 'no-store' });
+        if (!response.ok) throw new Error();
+      } catch (error) {
+        setMessage('remote-message', '遥控操作失败', true);
+      }
+    });
+    refreshFiles();
+  </script>
+</body>
+</html>
